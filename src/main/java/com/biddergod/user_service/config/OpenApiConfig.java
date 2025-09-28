@@ -15,6 +15,7 @@ public class OpenApiConfig {
     @Bean
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
+                .openapi("3.0.1")
                 .info(new Info()
                         .title("BidderGod Users Service API")
                         .version("1.0.0")
