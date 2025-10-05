@@ -86,7 +86,7 @@ jobs:
           echo "Triggering deployment for ${{ env.AWS_ECS_CLUSTER }}-${{ env.SERVICE_NAME }}..."
           aws ecs update-service \
             --cluster ${{ env.AWS_ECS_CLUSTER }} \
-            --service ${{ env.AWS_ECS_CLUSTER }}-${{ env.SERVICE_NAME }} \
+            --service ${{ env.SERVICE_NAME }} \
             --force-new-deployment \
             --region ${{ env.AWS_REGION }}
 
@@ -95,7 +95,7 @@ jobs:
           echo "Waiting for service to stabilize..."
           aws ecs wait services-stable \
             --cluster ${{ env.AWS_ECS_CLUSTER }} \
-            --services ${{ env.AWS_ECS_CLUSTER }}-${{ env.SERVICE_NAME }} \
+            --services ${{ env.SERVICE_NAME }} \
             --region ${{ env.AWS_REGION }}
 
       - name: Verify deployment
@@ -103,7 +103,7 @@ jobs:
           echo "Verifying deployment status..."
           SERVICE_INFO=$(aws ecs describe-services \
             --cluster ${{ env.AWS_ECS_CLUSTER }} \
-            --services ${{ env.AWS_ECS_CLUSTER }}-${{ env.SERVICE_NAME }} \
+            --services ${{ env.SERVICE_NAME }} \
             --region ${{ env.AWS_REGION }} \
             --query 'services[0]' \
             --output json)
@@ -128,7 +128,7 @@ jobs:
           echo "Fetching latest task details..."
           TASK_ARN=$(aws ecs list-tasks \
             --cluster ${{ env.AWS_ECS_CLUSTER }} \
-            --service-name ${{ env.AWS_ECS_CLUSTER }}-${{ env.SERVICE_NAME }} \
+            --service-name ${{ env.SERVICE_NAME }} \
             --region ${{ env.AWS_REGION }} \
             --query 'taskArns[0]' \
             --output text)
