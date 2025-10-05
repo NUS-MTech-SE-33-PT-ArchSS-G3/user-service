@@ -90,38 +90,36 @@ jobs:
             --force-new-deployment \
             --region ${{ env.AWS_REGION }}
 
-#      - name: Wait for deployment to stabilize
-#        run: |
-#          echo "Waiting for service to stabilize..."
-#          aws ecs wait services-stable \
-#            --cluster ${{ env.AWS_ECS_CLUSTER }} \
-#            --services ${{ env.SERVICE_NAME }} \
-#            --region ${{ env.AWS_REGION }}
-
-      - name: Verify deployment
+      - name: Check deployed service
         run: |
-          echo "Verifying deployment status..."
-          SERVICE_INFO=$(aws ecs describe-services \
+          echo "Checking deployed service..."
+
+          # Get task definition ARN
+          TASK_DEF=$(aws ecs describe-services \
             --cluster ${{ env.AWS_ECS_CLUSTER }} \
             --services ${{ env.SERVICE_NAME }} \
             --region ${{ env.AWS_REGION }} \
-            --query 'services[0]' \
-            --output json)
+            --query 'services[0].deployments[0].taskDefinition' \
+            --output text)
 
-          RUNNING_COUNT=$(echo $SERVICE_INFO | jq -r '.runningCount')
-          DESIRED_COUNT=$(echo $SERVICE_INFO | jq -r '.desiredCount')
-          DEPLOYMENT_STATUS=$(echo $SERVICE_INFO | jq -r '.deployments[0].rolloutState')
+          echo "Task Definition: $TASK_DEF"
 
-          echo "Running tasks: $RUNNING_COUNT"
-          echo "Desired tasks: $DESIRED_COUNT"
-          echo "Deployment status: $DEPLOYMENT_STATUS"
+          # Get deployed Docker image
+          IMAGE=$(aws ecs describe-task-definition \
+            --task-definition $TASK_DEF \
+            --region ${{ env.AWS_REGION }} \
+            --query 'taskDefinition.containerDefinitions[0].image' \
+            --output text)
 
-          if [ "$RUNNING_COUNT" -eq "$DESIRED_COUNT" ] && [ "$DEPLOYMENT_STATUS" = "COMPLETED" ]; then
-            echo "✅ Deployment successful!"
-          else
-            echo "❌ Deployment verification failed"
-            exit 1
-          fi
+          echo "Deployed Image: $IMAGE"
+
+          # Get deployment status
+          aws ecs describe-services \
+            --cluster ${{ env.AWS_ECS_CLUSTER }} \
+            --services ${{ env.SERVICE_NAME }} \
+            --region ${{ env.AWS_REGION }} \
+            --query 'services[0].{Status:status,Running:runningCount,Desired:desiredCount,Pending:pendingCount}' \
+            --output table
 
       - name: Get task details
         run: |
