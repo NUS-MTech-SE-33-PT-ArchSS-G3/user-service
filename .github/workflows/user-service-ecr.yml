@@ -8,9 +8,9 @@ on:
 
 env:
   AWS_REGION: ${{ vars.AWS_REGION }}
-  ECR_REPOSITORY: ${{ vars.AWS_ECR_REPOSITORY }}
-  ECS_CLUSTER: ${{ vars.AWS_ECS_CLUSTER }}
-  SERVICE_NAME: user-service
+  AWS_ECR_REPOSITORY: ${{ vars.AWS_ECR_REPOSITORY }}
+  AWS_ECS_CLUSTER: ${{ vars.AWS_ECS_CLUSTER }}
+  SERVICE_NAME: ${{vars.SERVICE_NAME}}
 
 jobs:
   build-and-push:
@@ -40,7 +40,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}
+          images: ${{ steps.login-ecr.outputs.registry }}/${{ env.AWS_ECR_REPOSITORY }}
           tags: |
             type=ref,event=branch
             type=sha,prefix={{branch}}-
@@ -83,10 +83,10 @@ jobs:
 
       - name: Force ECS service deployment
         run: |
-          echo "Triggering deployment for ${{ env.ECS_CLUSTER }}-${{ env.SERVICE_NAME }}..."
+          echo "Triggering deployment for ${{ env.AWS_ECS_CLUSTER }}-${{ env.SERVICE_NAME }}..."
           aws ecs update-service \
-            --cluster ${{ env.ECS_CLUSTER }} \
-            --service ${{ env.ECS_CLUSTER }}-${{ env.SERVICE_NAME }} \
+            --cluster ${{ env.AWS_ECS_CLUSTER }} \
+            --service ${{ env.AWS_ECS_CLUSTER }}-${{ env.SERVICE_NAME }} \
             --force-new-deployment \
             --region ${{ env.AWS_REGION }}
 
@@ -94,16 +94,16 @@ jobs:
         run: |
           echo "Waiting for service to stabilize..."
           aws ecs wait services-stable \
-            --cluster ${{ env.ECS_CLUSTER }} \
-            --services ${{ env.ECS_CLUSTER }}-${{ env.SERVICE_NAME }} \
+            --cluster ${{ env.AWS_ECS_CLUSTER }} \
+            --services ${{ env.AWS_ECS_CLUSTER }}-${{ env.SERVICE_NAME }} \
             --region ${{ env.AWS_REGION }}
 
       - name: Verify deployment
         run: |
           echo "Verifying deployment status..."
           SERVICE_INFO=$(aws ecs describe-services \
-            --cluster ${{ env.ECS_CLUSTER }} \
-            --services ${{ env.ECS_CLUSTER }}-${{ env.SERVICE_NAME }} \
+            --cluster ${{ env.AWS_ECS_CLUSTER }} \
+            --services ${{ env.AWS_ECS_CLUSTER }}-${{ env.SERVICE_NAME }} \
             --region ${{ env.AWS_REGION }} \
             --query 'services[0]' \
             --output json)
@@ -127,15 +127,15 @@ jobs:
         run: |
           echo "Fetching latest task details..."
           TASK_ARN=$(aws ecs list-tasks \
-            --cluster ${{ env.ECS_CLUSTER }} \
-            --service-name ${{ env.ECS_CLUSTER }}-${{ env.SERVICE_NAME }} \
+            --cluster ${{ env.AWS_ECS_CLUSTER }} \
+            --service-name ${{ env.AWS_ECS_CLUSTER }}-${{ env.SERVICE_NAME }} \
             --region ${{ env.AWS_REGION }} \
             --query 'taskArns[0]' \
             --output text)
 
           if [ "$TASK_ARN" != "None" ]; then
             aws ecs describe-tasks \
-              --cluster ${{ env.ECS_CLUSTER }} \
+              --cluster ${{ env.AWS_ECS_CLUSTER }} \
               --tasks $TASK_ARN \
               --region ${{ env.AWS_REGION }} \
               --query 'tasks[0].{Status:lastStatus,Health:healthStatus,CreatedAt:createdAt}' \
