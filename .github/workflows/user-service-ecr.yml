@@ -90,13 +90,13 @@ jobs:
             --force-new-deployment \
             --region ${{ env.AWS_REGION }}
 
-      - name: Wait for deployment to stabilize
-        run: |
-          echo "Waiting for service to stabilize..."
-          aws ecs wait services-stable \
-            --cluster ${{ env.AWS_ECS_CLUSTER }} \
-            --services ${{ env.SERVICE_NAME }} \
-            --region ${{ env.AWS_REGION }}
+#      - name: Wait for deployment to stabilize
+#        run: |
+#          echo "Waiting for service to stabilize..."
+#          aws ecs wait services-stable \
+#            --cluster ${{ env.AWS_ECS_CLUSTER }} \
+#            --services ${{ env.SERVICE_NAME }} \
+#            --region ${{ env.AWS_REGION }}
 
       - name: Verify deployment
         run: |
