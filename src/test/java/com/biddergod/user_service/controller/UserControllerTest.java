@@ -58,9 +58,6 @@ class UserControllerTest {
         testUser.setEmail("test@example.com");
         testUser.setFirstName("John");
         testUser.setLastName("Doe");
-        testUser.setAverageRating(4.5);
-        testUser.setTotalReviews(10);
-        testUser.setReputationScore(850);
 
         testAccessTokenDetails = mock(CognitoUserDetails.class);
         lenient().when(testAccessTokenDetails.getCognitoSub()).thenReturn("test-cognito-sub");
@@ -179,7 +176,6 @@ class UserControllerTest {
         userWithoutNames.setEmail("test@example.com");
         userWithoutNames.setFirstName(null);
         userWithoutNames.setLastName(null);
-        userWithoutNames.setReputationScore(100);
 
         when(jwtService.getCurrentUser()).thenReturn(Optional.of(userWithoutNames));
         when(jwtService.getCurrentCognitoUserDetails()).thenReturn(Optional.of(testAccessTokenDetails));

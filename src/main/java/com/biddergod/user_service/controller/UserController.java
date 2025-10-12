@@ -1,10 +1,12 @@
 package com.biddergod.user_service.controller;
 
+import com.biddergod.user_service.dto.UserDetailsResponse;
 import com.biddergod.user_service.dto.UserProfileUpdateRequest;
 import com.biddergod.user_service.entity.User;
 import com.biddergod.user_service.security.CognitoUserDetails;
 import com.biddergod.user_service.service.IdTokenService;
 import com.biddergod.user_service.service.JwtService;
+import com.biddergod.user_service.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -21,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/users")
@@ -33,6 +36,9 @@ public class UserController {
 
     @Autowired
     private IdTokenService idTokenService;
+
+    @Autowired
+    private UserService userService;
 
     /**
      * Get current user information with optional enhancement
@@ -78,9 +84,6 @@ public class UserController {
             userInfo.put("email", user.getEmail());
             userInfo.put("firstName", user.getFirstName());
             userInfo.put("lastName", user.getLastName());
-            userInfo.put("averageRating", user.getAverageRating());
-            userInfo.put("totalReviews", user.getTotalReviews());
-            userInfo.put("reputationScore", user.getReputationScore());
 
             // Add access token information
             Optional<CognitoUserDetails> accessTokenDetails = jwtService.getCurrentCognitoUserDetails();
@@ -185,27 +188,6 @@ public class UserController {
     }
 
     /**
-     * Check if current user has a specific role
-     * GET /api/users/has-role?role=ADMIN
-     * Requires: Authorization: Bearer <cognito_access_token>
-     */
-    @GetMapping("/has-role")
-    public ResponseEntity<?> hasRole(@RequestParam String role) {
-        try {
-            if (!jwtService.isTokenValid()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("Invalid token");
-            }
-
-            boolean hasRole = jwtService.hasRole(role);
-            return ResponseEntity.ok(Map.of("hasRole", hasRole, "role", role));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Error checking user role: " + e.getMessage());
-        }
-    }
-
-    /**
      * Get JWT token claims (for debugging)
      * GET /api/users/token-info
      * Requires: Authorization: Bearer <cognito_access_token>
@@ -297,6 +279,45 @@ public class UserController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("Error updating user profile: " + e.getMessage());
+        }
+    }
+
+    // ========== Public user apis for payment service ==========
+
+    /**
+     * Get user details by user ID(s)
+     * GET /api/users?id=1 (single user)
+     * GET /api/users?id=1,2,3 (multiple users)
+     * Public endpoint for other microservices (payment-service, auction-service, etc.)
+     */
+    @Operation(summary = "Get user details by ID(s)", description = "Retrieve user profile information by one or more user IDs")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved user details"),
+        @ApiResponse(responseCode = "400", description = "No IDs provided"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @GetMapping
+    public ResponseEntity<?> getUsersByIds(@RequestParam List<Long> id) {
+        try {
+            if (id == null || id.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "No user IDs provided"));
+            }
+
+            List<UserDetailsResponse> users = id.stream()
+                .map(userService::findById)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(UserDetailsResponse::new)
+                .toList();
+
+            return ResponseEntity.ok(Map.of(
+                "users", users,
+                "found", users.size(),
+                "requested", id.size()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "Error retrieving users", "message", e.getMessage()));
         }
     }
 }

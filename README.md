@@ -51,6 +51,34 @@ The User Service is a Spring Boot application that provides core user management
 
 ### Docker
 
+#### Using Docker Compose (Recommended)
+
+Run the entire service with Docker Compose:
+
+```bash
+# Start the service
+docker-compose up
+
+# Start in detached mode
+docker-compose up -d
+
+# View logs
+docker-compose logs -f user-service
+
+# Stop the service
+docker-compose down
+
+# Rebuild and start
+docker-compose up --build
+```
+
+Access the application:
+- API: http://localhost:8080
+- Swagger UI: http://localhost:8080/swagger-ui.html
+- Health check: http://localhost:8080/actuator/health
+
+#### Manual Docker Commands
+
 1. **Build image**
    ```bash
    docker build -t user-service .
@@ -60,6 +88,15 @@ The User Service is a Spring Boot application that provides core user management
    ```bash
    docker run -p 8080:8080 user-service
    ```
+
+#### Adding Kafka (Optional)
+
+If the user-service needs to publish events to Kafka in the future, uncomment the Kafka service in `docker-compose.yaml`:
+
+```bash
+# Edit docker-compose.yaml and uncomment the kafka section
+docker-compose up -d kafka
+```
 
 ## API Documentation
 
@@ -111,6 +148,8 @@ user-service/
 │   │       └── application.properties
 │   └── test/                        # Test code
 ├── Dockerfile                       # Multi-stage Docker build
+├── docker-compose.yaml              # Docker Compose configuration
+├── .dockerignore                    # Docker build exclusions
 ├── pom.xml                          # Maven configuration
 └── README.md
 ```
