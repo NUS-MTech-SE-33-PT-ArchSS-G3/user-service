@@ -33,6 +33,9 @@ public class SecurityConfig {
                 .requestMatchers("/", "/api/health", "/api/info").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
 
+                // Actuator endpoints for health checks
+                .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
+
                 // OpenAPI/Swagger endpoints
                 .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
 
