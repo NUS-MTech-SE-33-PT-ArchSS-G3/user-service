@@ -269,12 +269,12 @@ public class UserController {
                 user.setLastName(request.getLastName());
             }
 
-            // Save updated user (you would uncomment this in real implementation)
-            // userRepository.save(user);
+            // Save updated user to database
+            User savedUser = userService.save(user);
 
             return ResponseEntity.ok(Map.of(
                 "message", "Profile updated successfully",
-                "user", user
+                "user", savedUser
             ));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

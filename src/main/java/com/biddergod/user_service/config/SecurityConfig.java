@@ -3,7 +3,6 @@ package com.biddergod.user_service.config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -37,18 +36,8 @@ public class SecurityConfig {
                 // OpenAPI/Swagger endpoints
                 .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
 
-                // Public reputation endpoints (read-only)
-                .requestMatchers(HttpMethod.GET, "/api/reputation/top-users").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/reputation/trusted-users").permitAll()
-
-                // Public feedback endpoints (read-only)
-                .requestMatchers(HttpMethod.GET, "/api/feedback/user/**").permitAll()
-
                 // Protected endpoints - require authentication
-                .requestMatchers(HttpMethod.POST, "/api/feedback").authenticated()
                 .requestMatchers("/api/users/**").authenticated()
-                .requestMatchers("/api/reputation/user/*/recalculate").authenticated()
-                .requestMatchers("/api/reputation/recalculate-all").hasRole("ADMIN")
 
                 // All other requests require authentication
                 .anyRequest().authenticated()
