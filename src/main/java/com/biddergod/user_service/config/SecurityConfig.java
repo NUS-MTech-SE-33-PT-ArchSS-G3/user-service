@@ -57,15 +57,19 @@ public class SecurityConfig {
 
     @Bean
     public JwtDecoder jwtDecoder() {
-        // For testing without Cognito connection, use a mock decoder
-        // In production, uncomment the lines below:
-         String issuerUri = cognitoConfig.getIssuerUri();
-         return NimbusJwtDecoder.withIssuerLocation(issuerUri).build();
+        // For local/Docker development without Cognito connection, use a mock decoder
+        // In production with AWS Cognito, uncomment the lines below:
+//         String issuerUri = cognitoConfig.getIssuerUri();
+//         return NimbusJwtDecoder.withIssuerLocation(issuerUri).build();
 
-        // Mock JWT decoder for testing
-//        return token -> {
-//            throw new RuntimeException("JWT validation disabled for testing");
-//        };
+        // Mock JWT decoder for local testing (no validation)
+        return token -> {
+            // Return a minimal valid Jwt for local development
+            return org.springframework.security.oauth2.jwt.Jwt.withTokenValue(token)
+                .header("alg", "none")
+                .claim("sub", "test-user")
+                .build();
+        };
     }
 
     @Bean
