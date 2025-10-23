@@ -2,8 +2,8 @@ name: Build and Push User Service to ECR
 
 on:
   push:
-    branches:
-      - main
+    tags:
+      - '*.*.*'
   workflow_dispatch:
 
 env:
